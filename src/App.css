@@ -25,6 +25,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
+  min-height: 100dvh; /* 移动端动态视口高度 */
   padding: 2rem;
 }
 
@@ -35,6 +36,42 @@
 
 .app p {
   color: #6b7280;
+}
+
+/* 平板适配 */
+@media (max-width: 768px) {
+  .app {
+    padding: 1.5rem;
+  }
+
+  .app h1 {
+    font-size: 1.5rem;
+  }
+}
+
+/* 手机适配 */
+@media (max-width: 480px) {
+  :root {
+    font-size: 14px;
+  }
+
+  .app {
+    padding: 1rem;
+  }
+
+  .app h1 {
+    font-size: 1.25rem;
+  }
+}
+
+/* 安全区域适配（刘海屏/底部手势条） */
+@supports (padding: env(safe-area-inset-top)) {
+  .app {
+    padding-top: max(1rem, env(safe-area-inset-top));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
 }
 
 @media (prefers-color-scheme: dark) {

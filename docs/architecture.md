@@ -136,11 +136,14 @@ dragon-vault/
 - Key 的使用记录（调用次数、最后使用时间）
 - Key 的复制/测试连通性
 
-### 5.3 存储层 (`storage.rs` + `local_storage.rs`)
+### 5.3 存储层 (`storage.rs` + `local_storage.rs` + `secure_storage.rs`)
 
-- 定义 `Storage` trait 抽象接口
+- 定义 `Storage` trait（数据持久化）和 `SecureKeyStore` trait（敏感密钥存储）
 - `LocalStorage` 实现：加密 JSON 文件存储于系统安全目录
-- 数据文件路径：使用 Tauri 的 `app_data_dir`
+- `DesktopSecureKeyStore`：桌面端密钥存储（可结合 DPAPI）
+- `MobileSecureKeyStore`：移动端密钥存储（条件编译，仅 Android/iOS）
+- `Platform` 枚举：运行时平台检测，支持按平台选择存储策略
+- 数据文件路径：桌面端使用 Tauri 的 `app_data_dir`
 - 支持数据导出/导入（加密备份）
 
 ### 5.4 服务商模型 (`provider.rs`)
@@ -173,3 +176,35 @@ dragon-vault/
 - 所有 Tauri command 返回统一的 `Result<T, AppError>` 类型
 - 前端错误处理统一在 service 层捕获并转换为友好的用户提示
 - 新增功能时，先定义 Rust model 和 command 接口，再开发前端对接
+
+## 9. 移动端扩展规划
+
+Tauri 2 原生支持 Android 和 iOS，项目已提前做好以下铺垫：
+
+### 9.1 已完成的架构铺垫
+
+| 铺垫项 | 说明 |
+|--------|------|
+| `Platform` 枚举 | 运行时检测平台（桌面/移动），支持按平台分支逻辑 |
+| `SecureKeyStore` trait | 安全密钥存储抽象，桌面端和移动端各自实现 |
+| `MobileSecureKeyStore` | 移动端安全存储占位（`#[cfg(android/ios)]` 条件编译） |
+| `LocalStorage::for_platform()` | 按平台选择存储策略 |
+| 前端响应式 CSS | 平板/手机断点 + 安全区域适配（刘海屏/手势条） |
+| `mobile_entry_point` | `lib.rs` 中已保留移动端入口宏 |
+
+### 9.2 移动端待实现项
+
+| 待实现 | 优先级 | 说明 |
+|--------|--------|------|
+| Android Keystore 集成 | 高 | 通过 JNI 调用硬件级 TEE/StrongBox 存储 |
+| iOS Keychain 集成 | 高 | 通过 FFI 调用 Secure Enclave |
+| 移动端 UI 布局 | 中 | 底部导航栏、触控手势、列表滑动操作 |
+| 生物识别解锁 | 中 | Android 指纹 / iOS FaceID 替代主密码输入 |
+| 移动端推送通知 | 低 | Key 使用提醒、异常访问告警 |
+| 跨设备同步 | 低 | 端到端加密的可选云同步（商业化增值功能） |
+
+### 9.3 移动端构建前置条件
+
+- Android: SDK + NDK + `rustup target add aarch64-linux-android`
+- iOS: macOS + Xcode + `rustup target add aarch64-apple-ios`
+- 详见 [Tauri Mobile 文档](https://tauri.app/start/prerequisites/)

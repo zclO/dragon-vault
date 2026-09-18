@@ -1,21 +1,71 @@
-import { useState } from "react";
-import { Moon, Sun, Monitor, Upload, Download, Info } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Moon, Sun, Monitor, Upload, Download, Info, Loader2, Save } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
+import { appService, settingsService } from "@/services/api";
+import type { AppSettings, ThemeMode } from "@/services/types";
+import { applyTheme } from "@/hooks/useVault";
 
-type ThemeMode = "light" | "dark" | "system";
+const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+const DEFAULT_SETTINGS: AppSettings = { theme: "system", autoLockMinutes: 5, language: "zh-CN" };
 
 export default function Settings() {
-  const [theme, setTheme] = useState<ThemeMode>("system");
-  const [autoLock, setAutoLock] = useState("5");
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [savedTip, setSavedTip] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [version, setVersion] = useState("0.1.0");
+
+  useEffect(() => {
+    settingsService
+      .get()
+      .then((s) => {
+        setSettings(s);
+        applyTheme(s.theme);
+      })
+      .catch((e) => setError(errorMessage(e)))
+      .finally(() => setLoading(false));
+    appService.getVersion().then(setVersion).catch(() => {});
+  }, []);
+
+  const handleSave = async () => {
+    const minutes = Math.min(60, Math.max(1, Math.round(settings.autoLockMinutes) || 5));
+    setError(null);
+    setSaving(true);
+    try {
+      const saved = await settingsService.update({ ...settings, autoLockMinutes: minutes });
+      setSettings(saved);
+      setSavedTip(true);
+      setTimeout(() => setSavedTip(false), 2000);
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const setTheme = (theme: ThemeMode) => {
+    setSettings({ ...settings, theme });
+    applyTheme(theme);
+  };
 
   const themeOptions: { value: ThemeMode; icon: typeof Sun; label: string }[] = [
     { value: "light", icon: Sun, label: "浅色" },
     { value: "dark", icon: Moon, label: "深色" },
     { value: "system", icon: Monitor, label: "跟随系统" },
   ];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center py-16">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -32,7 +82,7 @@ export default function Settings() {
             {themeOptions.map(({ value, icon: Icon, label }) => (
               <Button
                 key={value}
-                variant={theme === value ? "default" : "outline"}
+                variant={settings.theme === value ? "default" : "outline"}
                 size="sm"
                 onClick={() => setTheme(value)}
               >
@@ -57,12 +107,25 @@ export default function Settings() {
               className="w-24"
               min={1}
               max={60}
-              value={autoLock}
-              onChange={(e) => setAutoLock(e.target.value)}
+              value={settings.autoLockMinutes}
+              onChange={(e) => setSettings({ ...settings, autoLockMinutes: Number(e.target.value) })}
             />
           </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            无操作超过该时长后自动锁定保险库，需重新输入主密码。
+          </p>
         </CardContent>
       </Card>
+
+      {/* Preference actions */}
+      <div className="flex items-center gap-3">
+        <Button onClick={() => void handleSave()} disabled={saving}>
+          {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+          保存设置
+        </Button>
+        {savedTip && <span className="text-sm text-green-600">已保存</span>}
+      </div>
+      {error && <p className="text-sm text-destructive">{error}</p>}
 
       {/* Data */}
       <Card>
@@ -71,11 +134,11 @@ export default function Settings() {
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-3">
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled title="即将上线">
               <Download className="mr-2 h-4 w-4" />
               导出数据
             </Button>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" disabled title="即将上线">
               <Upload className="mr-2 h-4 w-4" />
               导入数据
             </Button>
@@ -96,7 +159,7 @@ export default function Settings() {
             <Info className="h-5 w-5 text-muted-foreground" />
             <div>
               <p className="text-sm font-medium">Dragon Vault</p>
-              <p className="text-xs text-muted-foreground">版本 0.1.0 · AGPL-3.0</p>
+              <p className="text-xs text-muted-foreground">版本 {version} · AGPL-3.0</p>
             </div>
           </div>
           <Separator className="my-4" />

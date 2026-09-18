@@ -15,6 +15,8 @@ pub trait Storage {
     fn exists(&self) -> bool;
 
     /// 删除存储数据
+    // 预留接口：数据重置/导出备份功能接入前暂无调用方
+    #[allow(dead_code)]
     fn delete(&self) -> Result<(), AppError>;
 }
 
@@ -23,6 +25,8 @@ pub trait Storage {
 /// 用于存储主密码哈希、加密密钥等敏感凭据。
 /// 桌面端使用文件 + 系统 DPAPI/CryptoAPI，
 /// 移动端使用硬件级安全存储。
+// 预留接口：移动端平台实现接入前暂无调用方
+#[allow(dead_code)]
 pub trait SecureKeyStore {
     /// 存储密钥（平台安全区域）
     fn store_key(&self, key_id: &str, data: &[u8]) -> Result<(), AppError>;
@@ -38,6 +42,8 @@ pub trait SecureKeyStore {
 }
 
 /// 当前运行平台
+#[allow(dead_code)] // is_mobile/is_desktop 为移动端扩展预留
+#[allow(clippy::upper_case_acronyms)] // 与 Android/IOS 平台命名保持一致
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Platform {
     Windows,

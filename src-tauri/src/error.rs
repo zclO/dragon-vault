@@ -18,6 +18,9 @@ pub enum AppError {
     #[error("认证失败: 主密码错误")]
     AuthError,
 
+    #[error("保险库已锁定，请先解锁")]
+    Locked,
+
     #[error("内部错误: {0}")]
     Internal(String),
 }

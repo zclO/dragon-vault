@@ -18,19 +18,35 @@ export interface CreateApiKeyRequest {
   tags?: string[];
 }
 
+/** 更新 API Key 的请求参数（缺省字段保持不变） */
+export interface UpdateApiKeyRequest {
+  id: string;
+  name?: string;
+  value?: string;
+  tags?: string[];
+}
+
 /** 服务商配置 */
 export interface ProviderConfig {
   id: string;
   name: string;
   baseUrl: string;
-  keyFormatPattern: string;
+  keyFormatPattern: string | null;
   models: string[];
   isBuiltIn: boolean;
 }
 
+export type ThemeMode = "light" | "dark" | "system";
+
+/** 保险库状态 */
+export interface VaultStatus {
+  initialized: boolean;
+  unlocked: boolean;
+}
+
 /** 应用设置 */
 export interface AppSettings {
-  theme: "light" | "dark" | "system";
+  theme: ThemeMode;
   autoLockMinutes: number;
   language: string;
 }

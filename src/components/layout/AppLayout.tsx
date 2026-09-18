@@ -1,7 +1,11 @@
+import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, KeyRound, Server, Settings } from "lucide-react";
+import { LayoutDashboard, KeyRound, Server, Settings, Lock } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { appService } from "@/services/api";
+import { useVault } from "@/hooks/useVault";
 import dragonLogo from "@/assets/dragon-logo.svg";
 
 const navItems = [
@@ -12,6 +16,13 @@ const navItems = [
 ];
 
 export function AppLayout() {
+  const { lock } = useVault();
+  const [version, setVersion] = useState("v0.1.0");
+
+  useEffect(() => {
+    appService.getVersion().then((v) => setVersion(`v${v}`)).catch(() => {});
+  }, []);
+
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Sidebar */}
@@ -42,7 +53,12 @@ export function AppLayout() {
           ))}
         </nav>
         <Separator />
-        <div className="px-6 py-4 text-xs text-muted-foreground">v0.1.0</div>
+        <div className="flex items-center justify-between px-6 py-4">
+          <span className="text-xs text-muted-foreground">{version}</span>
+          <Button variant="ghost" size="icon" className="h-8 w-8" title="锁定保险库" onClick={() => void lock()}>
+            <Lock className="h-4 w-4 text-muted-foreground" />
+          </Button>
+        </div>
       </aside>
 
       {/* Main content */}

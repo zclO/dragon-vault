@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Server, Plus, Globe } from "lucide-react";
+import { Server, Plus, Globe, Trash2, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,28 +15,55 @@ import {
 import { providerService } from "@/services/api";
 import type { ProviderConfig } from "@/services/types";
 
+const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
 export default function ProviderSettings() {
   const [providers, setProviders] = useState<ProviderConfig[]>([]);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newProvider, setNewProvider] = useState({ name: "", baseUrl: "" });
+  const [addError, setAddError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    providerService.list().then(setProviders);
+    providerService
+      .list()
+      .then(setProviders)
+      .catch((e) => alert(errorMessage(e)));
   }, []);
 
-  const handleAdd = () => {
+  const handleAdd = async () => {
     if (!newProvider.name || !newProvider.baseUrl) return;
-    const custom: ProviderConfig = {
-      id: `custom-${Date.now()}`,
-      name: newProvider.name,
-      baseUrl: newProvider.baseUrl,
-      keyFormatPattern: "",
-      models: [],
-      isBuiltIn: false,
-    };
-    setProviders((prev) => [...prev, custom]);
-    setDialogOpen(false);
-    setNewProvider({ name: "", baseUrl: "" });
+    setAddError(null);
+    setSaving(true);
+    // 后端要求服务商 ID 仅含小写字母/数字/连字符
+    const generatedId = `custom-${Date.now().toString(36)}`;
+    try {
+      await providerService.add({
+        id: generatedId,
+        name: newProvider.name.trim(),
+        baseUrl: newProvider.baseUrl.trim(),
+        keyFormatPattern: null,
+        models: [],
+        isBuiltIn: false,
+      });
+      setProviders(await providerService.list());
+      setDialogOpen(false);
+      setNewProvider({ name: "", baseUrl: "" });
+    } catch (e) {
+      setAddError(errorMessage(e));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("确定删除该自定义服务商？")) return;
+    try {
+      await providerService.delete(id);
+      setProviders((prev) => prev.filter((p) => p.id !== id));
+    } catch (e) {
+      alert(errorMessage(e));
+    }
   };
 
   return (
@@ -69,7 +96,18 @@ export default function ProviderSettings() {
                 {provider.isBuiltIn ? (
                   <Badge variant="secondary">内建</Badge>
                 ) : (
-                  <Badge variant="outline">自定义</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline">自定义</Badge>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      title="删除服务商"
+                      onClick={() => void handleDelete(provider.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 )}
               </div>
             </CardHeader>
@@ -113,12 +151,16 @@ export default function ProviderSettings() {
                 onChange={(e) => setNewProvider({ ...newProvider, baseUrl: e.target.value })}
               />
             </div>
+            {addError && <p className="text-sm text-destructive">{addError}</p>}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>
               取消
             </Button>
-            <Button onClick={handleAdd}>添加</Button>
+            <Button onClick={() => void handleAdd()} disabled={saving}>
+              {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              添加
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

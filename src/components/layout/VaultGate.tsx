@@ -68,8 +68,7 @@ function UnlockScreen({ initialized, error }: { initialized: boolean; error: str
       setSubmitting(true);
       await unlock(password);
     }
-    // 失败时保留输入供重试；成功后本组件会随解锁状态卸载
-    if (!initialized) setSubmitting(false);
+    setSubmitting(false);
   };
 
   return (

@@ -41,7 +41,8 @@ pub fn builtin_providers() -> Vec<ProviderConfig> {
             id: "zhipu".into(),
             name: "智谱 AI".into(),
             base_url: "https://open.bigmodel.cn/api/paas/v4".into(),
-            key_format_pattern: Some("^[a-f0-9._-]+$".into()),
+            // 智谱 Key 形如 <id>.<JWT>，JWT 段包含大小写字母、数字与 . _ -
+            key_format_pattern: Some("^[a-zA-Z0-9._-]+$".into()),
             models: vec![
                 "glm-4-plus".into(),
                 "glm-4-air".into(),

@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { appService } from "@/services/api";
 import { useVault } from "@/hooks/useVault";
 import dragonLogo from "@/assets/dragon-logo.svg";
+import { WindowControls } from "@/components/layout/WindowControls";
 
 const navItems = [
   { to: "/", icon: LayoutDashboard, label: "仪表盘" },
@@ -24,15 +25,14 @@ export function AppLayout() {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden">
+    <div className="flex h-screen overflow-hidden bg-background">
       {/* Sidebar */}
-      <aside className="flex w-60 flex-col border-r bg-sidebar">
-        <div className="flex items-center gap-2 px-6 py-5">
-          <img src={dragonLogo} alt="Dragon Vault" className="h-8 w-8" />
-          <span className="text-lg font-bold tracking-tight">Dragon Vault</span>
+      <aside className="flex w-60 flex-col border-r bg-sidebar select-none">
+        <div data-tauri-drag-region className="flex items-center gap-2.5 px-6 py-4 cursor-default">
+          <img src={dragonLogo} alt="Dragon Vault" className="h-7 w-7 dark:invert pointer-events-none" />
+          <span className="text-base font-bold tracking-tight pointer-events-none">Dragon Vault</span>
         </div>
-        <Separator />
-        <nav className="flex-1 space-y-1 px-3 py-4">
+        <nav className="flex-1 space-y-1 px-3 py-2">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}
@@ -53,7 +53,7 @@ export function AppLayout() {
           ))}
         </nav>
         <Separator />
-        <div className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center justify-between px-6 py-3.5">
           <span className="text-xs text-muted-foreground">{version}</span>
           <Button variant="ghost" size="icon" className="h-8 w-8" title="锁定保险库" onClick={() => void lock()}>
             <Lock className="h-4 w-4 text-muted-foreground" />
@@ -61,10 +61,16 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto bg-background p-6">
-        <Outlet />
-      </main>
+      {/* Main content with top drag bar & window controls */}
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <div className="flex h-9 items-center justify-between select-none">
+          <div data-tauri-drag-region className="flex-1 h-full cursor-default" />
+          <WindowControls />
+        </div>
+        <main className="flex-1 overflow-y-auto bg-background px-6 pb-6 pt-2">
+          <Outlet />
+        </main>
+      </div>
     </div>
   );
 }

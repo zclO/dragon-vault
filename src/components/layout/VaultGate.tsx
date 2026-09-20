@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVault } from "@/hooks/useVault";
 import dragonLogo from "@/assets/dragon-logo.svg";
+import { WindowControls } from "@/components/layout/WindowControls";
 
 /** 主密码强度规则（与后端 validate_password_strength 保持一致） */
 function validatePasswordStrength(password: string): string | null {
@@ -20,7 +21,11 @@ export function VaultGate({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-background">
+      <div className="relative flex h-screen items-center justify-center bg-background">
+        <div className="absolute top-0 left-0 right-0 flex h-9 items-center justify-between z-50 select-none">
+          <div data-tauri-drag-region className="flex-1 h-full cursor-default" />
+          <WindowControls />
+        </div>
         <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
       </div>
     );
@@ -68,11 +73,15 @@ function UnlockScreen({ initialized, error }: { initialized: boolean; error: str
   };
 
   return (
-    <div className="flex h-screen items-center justify-center bg-background p-6">
+    <div className="relative flex h-screen items-center justify-center bg-background p-6">
+      <div className="absolute top-0 left-0 right-0 flex h-9 items-center justify-between z-50 select-none">
+        <div data-tauri-drag-region className="flex-1 h-full cursor-default" />
+        <WindowControls />
+      </div>
       <div className="w-full max-w-sm">
-        <div className="mb-6 flex flex-col items-center gap-3">
-          <img src={dragonLogo} alt="Dragon Vault" className="h-16 w-16" />
-          <h1 className="text-xl font-bold tracking-tight">Dragon Vault</h1>
+        <div data-tauri-drag-region className="mb-6 flex flex-col items-center gap-3 cursor-default select-none">
+          <img src={dragonLogo} alt="Dragon Vault" className="h-16 w-16 dark:invert pointer-events-none" />
+          <h1 className="text-xl font-bold tracking-tight pointer-events-none">Dragon Vault</h1>
         </div>
         <Card>
           <CardHeader>

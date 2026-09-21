@@ -69,7 +69,7 @@ export default function ProviderSettings() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">服务商设置</h1>
+        <h1 className="hidden text-2xl font-bold md:block">服务商设置</h1>
         <Button size="sm" onClick={() => setDialogOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           添加自定义服务商

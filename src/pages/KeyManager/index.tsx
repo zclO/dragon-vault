@@ -138,7 +138,7 @@ export default function KeyManager() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">密钥管理</h1>
+        <h1 className="hidden text-2xl font-bold md:block">密钥管理</h1>
         <Button size="sm" onClick={() => setCreateOpen(true)}>
           <Plus className="mr-2 h-4 w-4" />
           添加密钥

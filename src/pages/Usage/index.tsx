@@ -86,7 +86,7 @@ export default function Usage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <div>
+        <div className="hidden md:block">
           <h1 className="text-2xl font-bold">额度用量</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             手动查询各厂商余额与用量，结果快照保存在保险库中

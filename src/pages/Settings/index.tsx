@@ -91,7 +91,7 @@ export default function Settings() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">设置</h1>
+      <h1 className="hidden text-2xl font-bold md:block">设置</h1>
 
       {/* Theme */}
       <Card>

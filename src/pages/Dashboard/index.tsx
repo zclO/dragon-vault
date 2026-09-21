@@ -34,7 +34,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold">仪表盘</h1>
+        <h1 className="hidden text-2xl font-bold md:block">仪表盘</h1>
         <div className="flex gap-2">
           <Link to="/keys">
             <Button size="sm">

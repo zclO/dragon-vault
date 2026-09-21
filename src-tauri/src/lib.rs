@@ -30,6 +30,7 @@ impl AppState {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_biometry::init())
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
             // 按当前平台选择存储策略，桌面端落盘于 app_data_dir
@@ -48,6 +49,11 @@ pub fn run() {
             commands::app_commands::get_settings,
             commands::app_commands::update_settings,
             commands::app_commands::get_dashboard_stats,
+            // 生物解锁
+            commands::biometric_commands::biometric_status,
+            commands::biometric_commands::enable_biometric,
+            commands::biometric_commands::disable_biometric,
+            commands::biometric_commands::unlock_with_biometric,
             // API Key
             commands::key_commands::create_api_key,
             commands::key_commands::list_api_keys,

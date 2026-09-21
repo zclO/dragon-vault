@@ -44,6 +44,16 @@ export interface VaultStatus {
   unlocked: boolean;
 }
 
+/** 指纹/生物解锁状态（后端含平台门控） */
+export interface BiometricStatus {
+  /** 设备生物硬件与系统录入是否可用 */
+  available: boolean;
+  /** 本应用是否已封存主密钥（可走指纹解锁） */
+  enrolled: boolean;
+  /** 不可用原因 */
+  reason: string | null;
+}
+
 /** 应用设置 */
 export interface AppSettings {
   theme: ThemeMode;

@@ -1,9 +1,11 @@
-import { useState, type FormEvent, type ReactNode } from "react";
-import { ShieldCheck, KeyRound, Loader2 } from "lucide-react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
+import { ShieldCheck, KeyRound, Loader2, Fingerprint } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useVault } from "@/hooks/useVault";
+import { biometricService } from "@/services/api";
+import type { BiometricStatus } from "@/services/types";
 import dragonLogo from "@/assets/dragon-logo.svg";
 import { WindowControls } from "@/components/layout/WindowControls";
 
@@ -39,11 +41,31 @@ export function VaultGate({ children }: { children: ReactNode }) {
 }
 
 function UnlockScreen({ initialized, error }: { initialized: boolean; error: string | null }) {
-  const { initialize, unlock } = useVault();
+  const { initialize, unlock, unlockWithBiometric } = useVault();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [inputError, setInputError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [bio, setBio] = useState<BiometricStatus | null>(null);
+  const [bioBusy, setBioBusy] = useState(false);
+
+  // 已初始化的设备上查询指纹解锁是否可用（后端含平台门控）
+  useEffect(() => {
+    if (!initialized) return;
+    biometricService
+      .getStatus()
+      .then(setBio)
+      .catch(() => setBio(null));
+  }, [initialized]);
+
+  const biometricReady = Boolean(bio?.available && bio?.enrolled);
+
+  const handleBiometric = async () => {
+    setBioBusy(true);
+    setInputError(null);
+    await unlockWithBiometric();
+    setBioBusy(false);
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -131,6 +153,28 @@ function UnlockScreen({ initialized, error }: { initialized: boolean; error: str
                 {initialized ? "解锁" : "创建保险库"}
               </Button>
             </form>
+            {initialized && biometricReady && (
+              <div className="mt-4 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs text-muted-foreground">或</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  disabled={bioBusy || submitting}
+                  onClick={() => void handleBiometric()}
+                >
+                  {bioBusy ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Fingerprint className="mr-2 h-4 w-4" />
+                  )}
+                  指纹解锁
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

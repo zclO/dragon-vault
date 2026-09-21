@@ -4,8 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
-import { appService, settingsService } from "@/services/api";
-import type { AppSettings, ThemeMode } from "@/services/types";
+import { appService, biometricService, settingsService } from "@/services/api";
+import type { AppSettings, BiometricStatus, ThemeMode } from "@/services/types";
 import { applyTheme } from "@/hooks/useVault";
 
 const errorMessage = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -19,6 +19,8 @@ export default function Settings() {
   const [savedTip, setSavedTip] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState("0.1.0");
+  const [bio, setBio] = useState<BiometricStatus | null>(null);
+  const [bioBusy, setBioBusy] = useState(false);
 
   useEffect(() => {
     settingsService
@@ -30,6 +32,7 @@ export default function Settings() {
       .catch((e) => setError(errorMessage(e)))
       .finally(() => setLoading(false));
     appService.getVersion().then(setVersion).catch(() => {});
+    biometricService.getStatus().then(setBio).catch(() => setBio(null));
   }, []);
 
   const handleSave = async () => {
@@ -51,6 +54,25 @@ export default function Settings() {
   const setTheme = (theme: ThemeMode) => {
     setSettings({ ...settings, theme });
     applyTheme(theme);
+  };
+
+  /** 开启/关闭指纹解锁（开启需已解锁，后端将主密钥封存进安全硬件） */
+  const handleToggleBiometric = async () => {
+    if (!bio) return;
+    setBioBusy(true);
+    setError(null);
+    try {
+      if (bio.enrolled) {
+        await biometricService.disable();
+      } else {
+        await biometricService.enable();
+      }
+      setBio(await biometricService.getStatus());
+    } catch (e) {
+      setError(errorMessage(e));
+    } finally {
+      setBioBusy(false);
+    }
   };
 
   const themeOptions: { value: ThemeMode; icon: typeof Sun; label: string }[] = [
@@ -114,6 +136,35 @@ export default function Settings() {
           <p className="mt-2 text-xs text-muted-foreground">
             无操作超过该时长后自动锁定保险库，需重新输入主密码。
           </p>
+          <Separator className="my-4" />
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-sm">指纹解锁</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {bio === null
+                  ? "检测可用性…"
+                  : !bio.available
+                    ? (bio.reason ?? "当前设备不可用")
+                    : bio.enrolled
+                      ? "主密钥已封存于设备安全芯片，验证指纹即可解锁"
+                      : "将主密钥封存到设备安全芯片，开启后可用指纹直接解锁"}
+              </p>
+            </div>
+            <Button
+              variant={bio?.enrolled ? "outline" : "default"}
+              size="sm"
+              disabled={bio === null || !bio.available || bioBusy}
+              onClick={() => void handleToggleBiometric()}
+            >
+              {bioBusy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              {bio?.enrolled ? "关闭" : "开启"}
+            </Button>
+          </div>
+          {bio?.available && bio.enrolled && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              变更系统指纹后封存密钥会失效，需用主密码解锁后重新开启。
+            </p>
+          )}
         </CardContent>
       </Card>
 

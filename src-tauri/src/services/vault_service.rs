@@ -75,10 +75,28 @@ impl VaultService {
         let salt = BASE64
             .decode(&envelope.salt)
             .map_err(|e| AppError::StorageError(format!("盐值解码失败: {e}")))?;
+        let key = CryptoService::derive_key(password, &salt)?;
+        self.finish_unlock(envelope, key)
+    }
+
+    /// 使用已派生的主密钥解锁（指纹解锁取回封存密钥后走此入口）
+    pub fn unlock_with_key(&mut self, key: Zeroizing<Vec<u8>>) -> Result<(), AppError> {
+        let envelope = self.load_envelope()?;
+        self.finish_unlock(envelope, key)
+    }
+
+    /// 解锁收尾：验证校验串 → 解密 payload → 建立会话
+    fn finish_unlock(
+        &mut self,
+        envelope: VaultEnvelope,
+        key: Zeroizing<Vec<u8>>,
+    ) -> Result<(), AppError> {
+        let salt = BASE64
+            .decode(&envelope.salt)
+            .map_err(|e| AppError::StorageError(format!("盐值解码失败: {e}")))?;
         let verifier = BASE64
             .decode(&envelope.verifier)
             .map_err(|e| AppError::StorageError(format!("校验串解码失败: {e}")))?;
-        let key = CryptoService::derive_key(password, &salt)?;
         if !CryptoService::verify_key(&key, &verifier) {
             return Err(AppError::AuthError);
         }
@@ -94,6 +112,11 @@ impl VaultService {
             contents,
         });
         Ok(())
+    }
+
+    /// 当前会话派生密钥的只读访问（供生物解锁封存用）
+    pub fn session_key(&self) -> Result<Zeroizing<Vec<u8>>, AppError> {
+        Ok(self.require_session()?.key.clone())
     }
 
     /// 立即锁定并清除内存中的密钥与数据
@@ -427,6 +450,38 @@ mod tests {
         svc.lock();
         assert!(matches!(svc.unlock("wrong12345"), Err(AppError::AuthError)));
         assert!(!svc.status().unlocked);
+    }
+
+    #[test]
+    fn test_unlock_with_key_roundtrip() {
+        let mut svc = service();
+        svc.initialize("password123").unwrap();
+        let key = svc.session_key().unwrap();
+        svc.lock();
+        assert!(!svc.status().unlocked);
+        svc.unlock_with_key(Zeroizing::new(key.to_vec())).unwrap();
+        assert!(svc.status().unlocked);
+    }
+
+    #[test]
+    fn test_unlock_with_wrong_key_rejected() {
+        let mut svc = service();
+        svc.initialize("password123").unwrap();
+        svc.lock();
+        let bogus = Zeroizing::new(vec![0u8; 32]);
+        assert!(matches!(
+            svc.unlock_with_key(bogus),
+            Err(AppError::AuthError)
+        ));
+        assert!(!svc.status().unlocked);
+    }
+
+    #[test]
+    fn test_session_key_requires_unlocked() {
+        let mut svc = service();
+        svc.initialize("password123").unwrap();
+        svc.lock();
+        assert!(matches!(svc.session_key(), Err(AppError::Locked)));
     }
 
     #[test]

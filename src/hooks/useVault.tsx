@@ -28,6 +28,7 @@ interface VaultContextValue {
   error: string | null;
   initialize: (password: string) => Promise<void>;
   unlock: (password: string) => Promise<void>;
+  unlockWithBiometric: () => Promise<void>;
   lock: () => Promise<void>;
 }
 
@@ -79,6 +80,17 @@ export function VaultProvider({ children }: { children: ReactNode }) {
     },
     [refresh],
   );
+
+  const unlockWithBiometric = useCallback(async () => {
+    setError(null);
+    try {
+      await vaultService.unlockWithBiometric();
+      lastActivityRef.current = Date.now();
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }, [refresh]);
 
   const lock = useCallback(async () => {
     setError(null);
@@ -137,7 +149,9 @@ export function VaultProvider({ children }: { children: ReactNode }) {
   }, [unlocked, lock]);
 
   return (
-    <VaultContext.Provider value={{ status, loading: status === null, error, initialize, unlock, lock }}>
+    <VaultContext.Provider
+      value={{ status, loading: status === null, error, initialize, unlock, unlockWithBiometric, lock }}
+    >
       {children}
     </VaultContext.Provider>
   );

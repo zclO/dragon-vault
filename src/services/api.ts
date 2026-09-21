@@ -2,6 +2,7 @@ import { invoke } from "@tauri-apps/api/core";
 import type {
   ApiKeySummary,
   AppSettings,
+  BiometricStatus,
   CreateApiKeyRequest,
   DashboardStats,
   ProviderConfig,
@@ -82,6 +83,36 @@ export const vaultService = {
       return;
     }
     await call("lock_vault");
+  },
+
+  /** 指纹解锁（仅移动端已封存密钥时可用） */
+  async unlockWithBiometric(): Promise<void> {
+    if (!isTauri) throw new Error("浏览器预览不支持指纹解锁");
+    await call("unlock_with_biometric");
+  },
+};
+
+// ---------- 生物解锁 ----------
+
+/** 指纹/生物解锁服务（Windows 实现审计未通过，后端门控暂仅安卓开放） */
+export const biometricService = {
+  async getStatus(): Promise<BiometricStatus> {
+    if (!isTauri) {
+      return { available: false, enrolled: false, reason: "浏览器预览不支持指纹解锁" };
+    }
+    return call<BiometricStatus>("biometric_status");
+  },
+
+  /** 封存主密钥，开启指纹解锁（需已解锁） */
+  async enable(): Promise<void> {
+    if (!isTauri) throw new Error("浏览器预览不支持指纹解锁");
+    await call("enable_biometric");
+  },
+
+  /** 移除封存密钥，关闭指纹解锁 */
+  async disable(): Promise<void> {
+    if (!isTauri) throw new Error("浏览器预览不支持指纹解锁");
+    await call("disable_biometric");
   },
 };
 

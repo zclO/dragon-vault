@@ -25,9 +25,9 @@ export function AppLayout() {
   }, []);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      {/* Sidebar */}
-      <aside className="flex w-60 flex-col border-r bg-sidebar select-none">
+    <div className="flex h-dvh overflow-hidden bg-background">
+      {/* Sidebar（仅桌面端） */}
+      <aside className="hidden w-60 flex-col border-r bg-sidebar select-none md:flex">
         <div data-tauri-drag-region className="flex items-center gap-2.5 px-6 py-4 cursor-default">
           <img src={dragonLogo} alt="Dragon Vault" className="h-7 w-7 dark:invert pointer-events-none" />
           <span className="text-base font-bold tracking-tight pointer-events-none">Dragon Vault</span>
@@ -61,15 +61,51 @@ export function AppLayout() {
         </div>
       </aside>
 
-      {/* Main content with top drag bar & window controls */}
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="flex h-9 items-center justify-between select-none">
+        {/* 移动端顶栏：品牌 + 锁库，预留刘海安全区 */}
+        <header className="border-b bg-sidebar select-none pt-[env(safe-area-inset-top)] md:hidden">
+          <div className="flex h-12 items-center justify-between px-4">
+            <div className="flex items-center gap-2">
+              <img src={dragonLogo} alt="Dragon Vault" className="h-6 w-6 dark:invert" />
+              <span className="text-base font-bold tracking-tight">Dragon Vault</span>
+            </div>
+            <Button variant="ghost" size="icon" className="h-9 w-9" title="锁定保险库" onClick={() => void lock()}>
+              <Lock className="h-4 w-4 text-muted-foreground" />
+            </Button>
+          </div>
+        </header>
+
+        {/* 桌面端顶部拖拽条 & 窗控按钮 */}
+        <div className="hidden h-9 items-center justify-between select-none md:flex">
           <div data-tauri-drag-region className="flex-1 h-full cursor-default" />
           <WindowControls />
         </div>
-        <main className="flex-1 overflow-y-auto bg-background px-6 pb-6 pt-2">
+
+        <main className="flex-1 overflow-y-auto bg-background px-4 pb-6 pt-2 md:px-6">
           <Outlet />
         </main>
+
+        {/* 移动端底部 Tab 导航，避让手势条 */}
+        <nav className="grid grid-cols-4 border-t bg-sidebar select-none pb-[env(safe-area-inset-bottom)] md:hidden">
+          {navItems.map(({ to, icon: Icon, label }) => (
+            <NavLink
+              key={to}
+              to={to}
+              end={to === "/"}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center justify-center gap-1 py-2.5 text-xs font-medium transition-colors",
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                    : "text-muted-foreground"
+                )
+              }
+            >
+              <Icon className="h-5 w-5" />
+              {label}
+            </NavLink>
+          ))}
+        </nav>
       </div>
     </div>
   );

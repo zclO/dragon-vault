@@ -88,6 +88,7 @@ pub struct MobileSecureKeyStore {
 }
 
 #[cfg(any(target_os = "android", target_os = "ios"))]
+#[allow(dead_code)] // 预留入口：Keystore/Keychain 接入前尚无调用方
 impl MobileSecureKeyStore {
     pub fn new() -> Self {
         Self {}

@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import { settingsService, vaultService } from "@/services/api";
+import { isMobilePlatform } from "@/lib/platform";
 import type { ThemeMode, VaultStatus } from "@/services/types";
 
 /** 应用主题到 <html>（dark 类供 Tailwind 自定义 variant 使用） */
@@ -123,6 +124,16 @@ export function VaultProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("keydown", recordActivity);
       if (timer !== undefined) window.clearInterval(timer);
     };
+  }, [unlocked, lock]);
+
+  // 移动端切后台立即锁定，避免多任务切换/截屏预览暴露明文数据（桌面行为不变）
+  useEffect(() => {
+    if (!unlocked || !isMobilePlatform()) return;
+    const onVisibilityChange = () => {
+      if (document.hidden) void lock();
+    };
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", onVisibilityChange);
   }, [unlocked, lock]);
 
   return (

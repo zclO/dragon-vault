@@ -29,7 +29,7 @@ base64 = "0.22"           # 密文信封编码
 chrono = "0.4"            # 时间戳处理
 rand = "0.8"              # 安全随机数（Salt/Nonce 生成）
 regex = "1"               # API Key 格式校验
-reqwest = { version = "0.12", features = ["json"] }  # Key 连通性测试
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }  # Key 连通性测试（rustls 避免安卓侧 OpenSSL 依赖）
 uuid = { version = "1", features = ["v4"] }  # 唯一标识符生成
 zeroize = { version = "1", features = ["alloc"] }   # 敏感数据内存清零
 

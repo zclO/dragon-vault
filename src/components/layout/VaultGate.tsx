@@ -21,8 +21,8 @@ export function VaultGate({ children }: { children: ReactNode }) {
 
   if (loading) {
     return (
-      <div className="relative flex h-screen items-center justify-center bg-background">
-        <div className="absolute top-0 left-0 right-0 flex h-9 items-center justify-between z-50 select-none">
+      <div className="relative flex h-dvh items-center justify-center bg-background">
+        <div className="absolute top-0 left-0 right-0 hidden h-9 items-center justify-between z-50 select-none md:flex">
           <div data-tauri-drag-region className="flex-1 h-full cursor-default" />
           <WindowControls />
         </div>
@@ -72,8 +72,8 @@ function UnlockScreen({ initialized, error }: { initialized: boolean; error: str
   };
 
   return (
-    <div className="relative flex h-screen items-center justify-center bg-background p-6">
-      <div className="absolute top-0 left-0 right-0 flex h-9 items-center justify-between z-50 select-none">
+    <div className="relative flex h-dvh items-center justify-center bg-background p-6">
+      <div className="absolute top-0 left-0 right-0 hidden h-9 items-center justify-between z-50 select-none md:flex">
         <div data-tauri-drag-region className="flex-1 h-full cursor-default" />
         <WindowControls />
       </div>

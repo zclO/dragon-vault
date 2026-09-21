@@ -47,7 +47,7 @@ export function WindowControls({ className }: { className?: string }) {
   };
 
   return (
-    <div className={`flex items-center select-none ${className ?? ""}`}>
+    <div className={`hidden items-center select-none md:flex ${className ?? ""}`}>
       <button
         type="button"
         onClick={handleMinimize}

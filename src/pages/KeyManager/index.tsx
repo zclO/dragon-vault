@@ -176,8 +176,8 @@ export default function KeyManager() {
           const testState = testStates[key.id];
           return (
             <Card key={key.id}>
-              <CardContent className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-4">
+              <CardContent className="flex flex-col items-start gap-3 py-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex w-full min-w-0 items-center gap-4">
                   <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
                     <KeyRound className="h-5 w-5 text-muted-foreground" />
                   </div>
@@ -198,7 +198,7 @@ export default function KeyManager() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex w-full items-center justify-between gap-3 md:w-auto md:justify-end">
                   <div className="flex gap-1">
                     {key.tags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-xs">
@@ -239,7 +239,7 @@ export default function KeyManager() {
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
-                  <span className="min-w-[80px] text-right text-xs text-muted-foreground">
+                  <span className="hidden min-w-[80px] text-right text-xs text-muted-foreground md:block">
                     {key.lastUsedAt ? new Date(key.lastUsedAt).toLocaleDateString() : "未使用"}
                   </span>
                 </div>

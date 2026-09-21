@@ -58,6 +58,49 @@ pub fn builtin_providers() -> Vec<ProviderConfig> {
             models: vec!["qwen-max".into(), "qwen-plus".into(), "qwen-turbo".into()],
             is_built_in: true,
         },
+        ProviderConfig {
+            id: "deepseek".into(),
+            name: "DeepSeek".into(),
+            base_url: "https://api.deepseek.com/v1".into(),
+            key_format_pattern: Some("^sk-[a-zA-Z0-9]+$".into()),
+            models: vec!["deepseek-chat".into(), "deepseek-reasoner".into()],
+            is_built_in: true,
+        },
+        ProviderConfig {
+            id: "moonshot".into(),
+            name: "Kimi（月之暗面）".into(),
+            base_url: "https://api.moonshot.cn/v1".into(),
+            key_format_pattern: Some("^sk-[a-zA-Z0-9_-]+$".into()),
+            models: vec![
+                "kimi-latest".into(),
+                "moonshot-v1-8k".into(),
+                "moonshot-v1-32k".into(),
+            ],
+            is_built_in: true,
+        },
+        ProviderConfig {
+            id: "openrouter".into(),
+            name: "OpenRouter".into(),
+            base_url: "https://openrouter.ai/api/v1".into(),
+            key_format_pattern: Some("^sk-or-[a-zA-Z0-9_-]+$".into()),
+            models: vec![
+                "openai/gpt-4o".into(),
+                "anthropic/claude-sonnet-4".into(),
+                "deepseek/deepseek-chat".into(),
+            ],
+            is_built_in: true,
+        },
+        ProviderConfig {
+            id: "siliconflow".into(),
+            name: "硅基流动 SiliconFlow".into(),
+            base_url: "https://api.siliconflow.cn/v1".into(),
+            key_format_pattern: Some("^sk-[a-zA-Z0-9_-]+$".into()),
+            models: vec![
+                "deepseek-ai/DeepSeek-V3".into(),
+                "Qwen/Qwen2.5-72B-Instruct".into(),
+            ],
+            is_built_in: true,
+        },
     ]
 }
 

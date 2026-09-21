@@ -67,3 +67,46 @@ export interface DashboardStats {
   totalProviders: number;
   recentUsage: number;
 }
+
+/** 余额附加行（厂商特有明细，如代金券/欠款/配额行） */
+export interface BalanceExtra {
+  label: string;
+  value: string;
+}
+
+/** 归一化后的余额/额度信息 */
+export interface BalanceInfo {
+  /** 币种或额度类别（CNY / USD / 配额 等） */
+  currency: string;
+  total: number | null;
+  granted: number | null;
+  toppedUp: number | null;
+  extra: BalanceExtra[];
+}
+
+/** 单模型 token 用量（仅部分厂商可提供） */
+export interface ModelUsage {
+  model: string;
+  promptTokens: number | null;
+  completionTokens: number | null;
+  totalTokens: number | null;
+}
+
+/** 一次额度/用量查询的结果 */
+export interface UsageReport {
+  keyId: string;
+  providerId: string;
+  fetchedAt: string;
+  balance: BalanceInfo | null;
+  tokenUsage: ModelUsage[] | null;
+  /** 厂商无公开接口时的说明 */
+  unsupportedReason: string | null;
+}
+
+/** 持久化的用量快照（时间倒序返回） */
+export interface UsageSnapshot {
+  keyId: string;
+  ts: string;
+  totalBalance: number | null;
+  totalTokens: number | null;
+}

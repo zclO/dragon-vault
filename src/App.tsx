@@ -6,6 +6,7 @@ import Dashboard from "@/pages/Dashboard";
 import KeyManager from "@/pages/KeyManager";
 import ProviderSettings from "@/pages/ProviderSettings";
 import Settings from "@/pages/Settings";
+import Usage from "@/pages/Usage";
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
               <Route index element={<Dashboard />} />
               <Route path="/keys" element={<KeyManager />} />
               <Route path="/providers" element={<ProviderSettings />} />
+              <Route path="/usage" element={<Usage />} />
               <Route path="/settings" element={<Settings />} />
             </Route>
           </Routes>

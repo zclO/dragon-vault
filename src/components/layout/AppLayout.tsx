@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
-import { LayoutDashboard, KeyRound, Server, Settings, Lock } from "lucide-react";
+import { LayoutDashboard, KeyRound, Server, Settings, Lock, Gauge } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -13,6 +13,7 @@ const navItems = [
   { to: "/", icon: LayoutDashboard, label: "仪表盘" },
   { to: "/keys", icon: KeyRound, label: "密钥管理" },
   { to: "/providers", icon: Server, label: "服务商" },
+  { to: "/usage", icon: Gauge, label: "用量" },
   { to: "/settings", icon: Settings, label: "设置" },
 ];
 
@@ -86,7 +87,7 @@ export function AppLayout() {
         </main>
 
         {/* 移动端底部 Tab 导航，避让手势条 */}
-        <nav className="grid grid-cols-4 border-t bg-sidebar select-none pb-[env(safe-area-inset-bottom)] md:hidden">
+        <nav className="grid grid-cols-5 border-t bg-sidebar select-none pb-[env(safe-area-inset-bottom)] md:hidden">
           {navItems.map(({ to, icon: Icon, label }) => (
             <NavLink
               key={to}

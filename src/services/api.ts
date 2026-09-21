@@ -7,6 +7,8 @@ import type {
   DashboardStats,
   ProviderConfig,
   UpdateApiKeyRequest,
+  UsageReport,
+  UsageSnapshot,
   VaultStatus,
 } from "./types";
 import { mockApiKeys, mockProviders } from "./mock-data";
@@ -271,5 +273,82 @@ export const appService = {
   async getVersion(): Promise<string> {
     if (!isTauri) return "0.1.0 (browser preview)";
     return call<string>("get_app_version");
+  },
+};
+
+// ---------- 额度/用量 ----------
+
+/** 浏览器预览用的确定性 Mock 报告 */
+function mockUsageReport(keyId: string): UsageReport {
+  const providerId = mockKeys.find((k) => k.id === keyId)?.providerId ?? "";
+  if (providerId === "deepseek" || providerId === "moonshot" || providerId === "siliconflow") {
+    return {
+      keyId,
+      providerId,
+      fetchedAt: new Date().toISOString(),
+      balance: {
+        currency: "CNY",
+        total: 66.6,
+        granted: providerId === "moonshot" ? 2.5 : 0,
+        toppedUp: 66.6,
+        extra: [],
+      },
+      tokenUsage: null,
+      unsupportedReason: null,
+    };
+  }
+  if (providerId === "zhipu") {
+    return {
+      keyId,
+      providerId,
+      fetchedAt: new Date().toISOString(),
+      balance: {
+        currency: "配额",
+        total: null,
+        granted: null,
+        toppedUp: null,
+        extra: [{ label: "Token 配额", value: "已用 10261098 / 40000000（剩余 29738902，26%）" }],
+      },
+      tokenUsage: [
+        { model: "glm-4-plus", promptTokens: null, completionTokens: null, totalTokens: 10240 },
+        { model: "glm-4-flash", promptTokens: null, completionTokens: null, totalTokens: 204800 },
+      ],
+      unsupportedReason: null,
+    };
+  }
+  return {
+    keyId,
+    providerId,
+    fetchedAt: new Date().toISOString(),
+    balance: null,
+    tokenUsage: null,
+    unsupportedReason: "浏览器预览仅演示界面，真实查询需在应用内发起",
+  };
+}
+
+/** 额度/用量查询服务（手动触发，后端落盘快照） */
+export const usageService = {
+  async fetch(keyId: string): Promise<UsageReport> {
+    if (!isTauri) {
+      await delay(400);
+      return mockUsageReport(keyId);
+    }
+    return call<UsageReport>("fetch_usage", { keyId });
+  },
+
+  async history(keyId: string, limit = 30): Promise<UsageSnapshot[]> {
+    if (!isTauri) {
+      // 预览环境合成一段缓降的余额趋势
+      const report = mockUsageReport(keyId);
+      const base = report.balance?.total;
+      if (base == null) return [];
+      return Array.from({ length: 10 }, (_, i): UsageSnapshot => ({
+        keyId,
+        ts: new Date(Date.now() - i * 86400000).toISOString(),
+        totalBalance: base + i * 1.8,
+        totalTokens: null,
+      }));
+    }
+    return call<UsageSnapshot[]>("usage_history", { keyId, limit });
   },
 };

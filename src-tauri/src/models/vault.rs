@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use crate::models::api_key::ApiKey;
 use crate::models::provider::ProviderConfig;
 use crate::models::settings::AppSettings;
+use crate::models::usage::UsageSnapshotRecord;
 
 /// 保险库磁盘信封（JSON 格式，payload/verifier 均为密文 Base64）
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -25,6 +26,9 @@ pub struct VaultContents {
     pub api_keys: Vec<ApiKey>,
     pub custom_providers: Vec<ProviderConfig>,
     pub settings: AppSettings,
+    /// 额度/用量查询快照历史（旧版本库无此字段，默认空）
+    #[serde(default)]
+    pub usage_snapshots: Vec<UsageSnapshotRecord>,
 }
 
 /// 保险库状态（前端据此决定展示初始化/解锁界面）
@@ -90,5 +94,14 @@ mod tests {
         let contents = VaultContents::default();
         assert!(contents.api_keys.is_empty());
         assert!(contents.custom_providers.is_empty());
+        assert!(contents.usage_snapshots.is_empty());
+    }
+
+    #[test]
+    fn test_contents_compat_with_legacy_json() {
+        // 旧版加密库没有 usageSnapshots 字段，反序列化应成功
+        let legacy = r#"{"apiKeys":[],"customProviders":[],"settings":{"theme":"system","autoLockMinutes":5,"language":"zh-CN"}}"#;
+        let contents: VaultContents = serde_json::from_str(legacy).unwrap();
+        assert!(contents.usage_snapshots.is_empty());
     }
 }

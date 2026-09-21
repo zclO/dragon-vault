@@ -41,6 +41,38 @@ export const mockProviders: ProviderConfig[] = [
     models: ["qwen-max", "qwen-plus", "qwen-turbo"],
     isBuiltIn: true,
   },
+  {
+    id: "deepseek",
+    name: "DeepSeek",
+    baseUrl: "https://api.deepseek.com/v1",
+    keyFormatPattern: "^sk-[a-zA-Z0-9]+$",
+    models: ["deepseek-chat", "deepseek-reasoner"],
+    isBuiltIn: true,
+  },
+  {
+    id: "moonshot",
+    name: "Kimi（月之暗面）",
+    baseUrl: "https://api.moonshot.cn/v1",
+    keyFormatPattern: "^sk-[a-zA-Z0-9_-]+$",
+    models: ["kimi-latest", "moonshot-v1-8k", "moonshot-v1-32k"],
+    isBuiltIn: true,
+  },
+  {
+    id: "openrouter",
+    name: "OpenRouter",
+    baseUrl: "https://openrouter.ai/api/v1",
+    keyFormatPattern: "^sk-or-[a-zA-Z0-9_-]+$",
+    models: ["openai/gpt-4o", "anthropic/claude-sonnet-4", "deepseek/deepseek-chat"],
+    isBuiltIn: true,
+  },
+  {
+    id: "siliconflow",
+    name: "硅基流动 SiliconFlow",
+    baseUrl: "https://api.siliconflow.cn/v1",
+    keyFormatPattern: "^sk-[a-zA-Z0-9_-]+$",
+    models: ["deepseek-ai/DeepSeek-V3", "Qwen/Qwen2.5-72B-Instruct"],
+    isBuiltIn: true,
+  },
 ];
 
 export const mockApiKeys: ApiKeySummary[] = [

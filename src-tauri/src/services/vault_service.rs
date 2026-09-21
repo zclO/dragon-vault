@@ -6,6 +6,7 @@ use crate::error::AppError;
 use crate::models::api_key::ApiKeySummary;
 use crate::models::provider::ProviderConfig;
 use crate::models::settings::AppSettings;
+use crate::models::usage::UsageSnapshotRecord;
 use crate::models::vault::{
     CreateApiKeyRequest, DashboardStats, UpdateApiKeyRequest, VaultContents, VaultEnvelope,
     VaultStatus,
@@ -17,6 +18,8 @@ use crate::services::{crypto::CryptoService, key_service, provider_service};
 const VAULT_VERSION: u32 = 1;
 /// 首次设置主密码时的最短长度
 const MIN_PASSWORD_LEN: usize = 8;
+/// 每个 Key 保留的额度快照条数上限
+const USAGE_SNAPSHOT_KEEP: usize = 90;
 
 /// 解锁后的会话，持有派生密钥与解密后的保险库内容
 struct VaultSession {
@@ -315,6 +318,52 @@ impl VaultService {
         }
     }
 
+    // ---------- 额度/用量快照 ----------
+
+    /// 追加一条用量快照并落盘（每 Key 仅保留最近 USAGE_SNAPSHOT_KEEP 条）
+    pub fn record_usage_snapshot(&mut self, record: UsageSnapshotRecord) -> Result<(), AppError> {
+        let session = self.require_session_mut()?;
+        session.contents.usage_snapshots.push(record);
+        // 按时间升序后从尾部（最新）开始计数，超出上限的旧快照丢弃
+        session
+            .contents
+            .usage_snapshots
+            .sort_by(|a, b| a.ts.cmp(&b.ts));
+        let mut keep_counts: std::collections::HashMap<String, usize> =
+            std::collections::HashMap::new();
+        let snapshots = std::mem::take(&mut session.contents.usage_snapshots);
+        session.contents.usage_snapshots = snapshots
+            .into_iter()
+            .rev()
+            .filter(|s| {
+                let count = keep_counts.entry(s.key_id.clone()).or_default();
+                *count += 1;
+                *count <= USAGE_SNAPSHOT_KEEP
+            })
+            .collect();
+        session.contents.usage_snapshots.reverse();
+        self.persist()
+    }
+
+    /// 指定 Key 的快照历史（时间倒序，最多 limit 条）
+    pub fn usage_history(
+        &self,
+        key_id: &str,
+        limit: usize,
+    ) -> Result<Vec<UsageSnapshotRecord>, AppError> {
+        let session = self.require_session()?;
+        let mut list: Vec<UsageSnapshotRecord> = session
+            .contents
+            .usage_snapshots
+            .iter()
+            .filter(|s| s.key_id == key_id)
+            .cloned()
+            .collect();
+        list.sort_by(|a, b| b.ts.cmp(&a.ts));
+        list.truncate(limit);
+        Ok(list)
+    }
+
     // ---------- 内部辅助 ----------
 
     fn require_session(&self) -> Result<&VaultSession, AppError> {
@@ -535,6 +584,56 @@ mod tests {
             svc.delete_provider("openai"),
             Err(AppError::ValidationError(_))
         ));
+    }
+
+    #[test]
+    fn test_usage_snapshot_prune_and_history() {
+        let mut svc = service();
+        svc.initialize("password123").unwrap();
+        for i in 0..(USAGE_SNAPSHOT_KEEP + 10) {
+            svc.record_usage_snapshot(UsageSnapshotRecord {
+                key_id: "k1".into(),
+                ts: format!("2026-01-01T{:02}:{:02}:00Z", i / 60, i % 60),
+                total_balance: Some(i as f64),
+                total_tokens: None,
+            })
+            .unwrap();
+        }
+        // 另一 Key 不受裁剪影响
+        svc.record_usage_snapshot(UsageSnapshotRecord {
+            key_id: "k2".into(),
+            ts: "2026-09-01T00:00:00Z".into(),
+            total_balance: None,
+            total_tokens: Some(5),
+        })
+        .unwrap();
+        let history = svc.usage_history("k1", 200).unwrap();
+        assert_eq!(history.len(), USAGE_SNAPSHOT_KEEP);
+        // 保留的是最新的而非最旧的，且时间倒序（最早 10 条被裁剪）
+        assert_eq!(history.first().unwrap().total_balance, Some(99.0));
+        assert_eq!(history.last().unwrap().total_balance, Some(10.0));
+        assert_eq!(svc.usage_history("k2", 200).unwrap().len(), 1);
+        assert_eq!(svc.usage_history("k3", 200).unwrap().len(), 0);
+        // limit 生效
+        assert_eq!(svc.usage_history("k1", 3).unwrap().len(), 3);
+    }
+
+    #[test]
+    fn test_usage_snapshot_requires_unlock() {
+        let mut svc = service();
+        svc.initialize("password123").unwrap();
+        svc.lock();
+        let record = UsageSnapshotRecord {
+            key_id: "k1".into(),
+            ts: "2026-09-01T00:00:00Z".into(),
+            total_balance: Some(1.0),
+            total_tokens: None,
+        };
+        assert!(matches!(
+            svc.record_usage_snapshot(record),
+            Err(AppError::Locked)
+        ));
+        assert!(matches!(svc.usage_history("k1", 10), Err(AppError::Locked)));
     }
 
     #[test]

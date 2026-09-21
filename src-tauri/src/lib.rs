@@ -66,6 +66,9 @@ pub fn run() {
             commands::provider_commands::add_custom_provider,
             commands::provider_commands::update_provider,
             commands::provider_commands::delete_provider,
+            // 额度/用量
+            commands::usage_commands::fetch_usage,
+            commands::usage_commands::usage_history,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
